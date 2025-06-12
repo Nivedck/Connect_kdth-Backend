@@ -23,6 +23,12 @@ app.use('/api/auth', authRoutes);
 const userRoutes =require('./routes/user');
 app.use('/api/user',userRoutes)
 
+const friendRoutes = require('./routes/friends');
+app.use('/api/friends', friendRoutes);
+
+
+
+
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
