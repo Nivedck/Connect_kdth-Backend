@@ -20,6 +20,9 @@ app.use('/uploads', express.static('uploads')); // Serve uploaded profile pics
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 
+const userRoutes =require('./routes/user');
+app.use('/api/user',userRoutes)
+
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
