@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const path = require('path'); // Add this
+const path = require('path');
 
 // Load environment variables
 dotenv.config();
@@ -28,11 +28,12 @@ const friendRoutes = require('./routes/friends');
 app.use('/api/friends', friendRoutes);
 
 // Serve static frontend files
-app.use(express.static(path.join(__dirname, '../frontend')));
+const frontendPath = path.join(__dirname, '../frontend');
+app.use(express.static(frontendPath));
 
-// Optional: fallback for unknown routes to show frontend
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend', 'login.html'));
+// Serve frontend for non-API GET routes (safe fallback)
+app.get(/^\/(?!api).*/, (req, res) => {
+  res.sendFile(path.join(frontendPath, 'login.html'));
 });
 
 // Connect to MongoDB
