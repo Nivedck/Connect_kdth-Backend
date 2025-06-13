@@ -16,7 +16,7 @@ const storage = multer.diskStorage({
     cb(null, dir);
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname)); // e.g. 171345234.png
+    cb(null, Date.now() + path.extname(file.originalname)); 
   }
 });
 
@@ -34,7 +34,7 @@ router.get('/me', authMiddleware, async (req, res) => {
   }
 });
 
-// Add to backend/routes/user.js
+// Update the Get User Suggestions route
 router.get('/suggestions', authMiddleware, async (req, res) => {
   try {
     const currentUser = await User.findById(req.user.id);
@@ -45,7 +45,8 @@ router.get('/suggestions', authMiddleware, async (req, res) => {
           ...currentUser.friends,
           ...currentUser.friendRequests
         ]
-      }
+      },
+      name: { $ne: 'John Doe' } 
     })
     .select('name email profilePic')
     .limit(10);

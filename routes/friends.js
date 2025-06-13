@@ -105,11 +105,42 @@ router.post('/accept', auth, async (req, res) => {
   }
 });
 
+// Reject Friend Request
+router.post('/reject', auth, async (req, res) => {
+  try {
+    const { identifier } = req.body;
+    const receiver = await User.findById(req.user.id);
+    const sender = await User.findOne({
+      $or: [{ email: identifier }, { name: identifier }]
+    });
+
+    if (!sender || !receiver) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!receiver.friendRequests.includes(sender._id)) {
+      return res.status(400).json({ message: 'No request from this user' });
+    }
+
+    // Remove friend request
+    receiver.friendRequests = receiver.friendRequests.filter(
+      id => id.toString() !== sender._id.toString()
+    );
+
+    await receiver.save();
+
+    res.json({ message: `Friend request rejected from ${sender.name}` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // Get Pending Friend Requests
 router.get('/pending', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate('friendRequests', 'name email');
+    const user = await User.findById(req.user.id)
+      .populate('friendRequests', 'name email profilePic'); // Add profilePic to populated fields
     res.json(user.friendRequests);
   } catch (err) {
     console.error(err);
