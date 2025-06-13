@@ -3,13 +3,23 @@ const router = express.Router();
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 
-// Send Friend Request
-router.post('/add/:email', auth, async (req, res) => {
+
+// Send Friend Request using email or name
+router.post('/request', auth, async (req, res) => {
   try {
-    const targetUser = await User.findOne({ email: req.params.email });
+    const { identifier } = req.body;
+
+    // Try finding user by email first, then by name
+    const targetUser = await User.findOne({
+      $or: [{ email: identifier }, { name: identifier }]
+    });
+
     const currentUser = await User.findById(req.user.id);
 
     if (!targetUser) return res.status(404).json({ message: 'User not found' });
+    if (targetUser._id.equals(currentUser._id))
+      return res.status(400).json({ message: 'You cannot add yourself' });
+
     if (targetUser.friendRequests.includes(currentUser._id))
       return res.status(400).json({ message: 'Request already sent' });
 
@@ -19,38 +29,50 @@ router.post('/add/:email', auth, async (req, res) => {
     targetUser.friendRequests.push(currentUser._id);
     await targetUser.save();
 
-    res.json({ message: 'Friend request sent' });
+    res.json({ message: 'Friend request sent to ' + targetUser.name });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Accept Friend Request
-router.post('/accept/:email', auth, async (req, res) => {
+
+// Accept Friend Request using name or email
+router.post('/accept', auth, async (req, res) => {
   try {
-    const sender = await User.findOne({ email: req.params.email });
+    const { identifier } = req.body;
+
     const receiver = await User.findById(req.user.id);
+    const sender = await User.findOne({
+      $or: [{ email: identifier }, { name: identifier }]
+    });
 
     if (!sender || !receiver) return res.status(404).json({ message: 'User not found' });
 
-    if (!receiver.friendRequests.includes(sender._id))
+    if (!receiver.friendRequests.includes(sender._id)) {
       return res.status(400).json({ message: 'No request from this user' });
+    }
 
-    receiver.friends.push(sender._id);
-    sender.friends.push(receiver._id);
+    if (!receiver.friends.includes(sender._id)) {
+      receiver.friends.push(sender._id);
+    }
+
+    if (!sender.friends.includes(receiver._id)) {
+      sender.friends.push(receiver._id);
+    }
 
     receiver.friendRequests = receiver.friendRequests.filter(id => id.toString() !== sender._id.toString());
 
     await receiver.save();
     await sender.save();
 
-    res.json({ message: 'Friend request accepted' });
+    res.json({ message: `Friend request accepted from ${sender.name}` });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 // Get Pending Friend Requests
 router.get('/pending', auth, async (req, res) => {
