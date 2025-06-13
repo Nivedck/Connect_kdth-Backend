@@ -34,6 +34,29 @@ router.get('/me', authMiddleware, async (req, res) => {
   }
 });
 
+// Add to backend/routes/user.js
+router.get('/suggestions', authMiddleware, async (req, res) => {
+  try {
+    const currentUser = await User.findById(req.user.id);
+    const users = await User.find({
+      _id: { 
+        $nin: [
+          req.user.id,
+          ...currentUser.friends,
+          ...currentUser.friendRequests
+        ]
+      }
+    })
+    .select('name email profilePic')
+    .limit(10);
+    
+    res.json(users);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // PUT /api/user/me - Update profile
 router.put('/me', authMiddleware, upload.single('profilePic'), async (req, res) => {
   try {
