@@ -86,7 +86,7 @@ npm run dotenv
 ```
 ## 🔗 Frontend Repo
 
--@Connect_kdth-Frontend
+- @Connect_kdth-Frontend
 
 ## 👤 Author
 - @nivedck
